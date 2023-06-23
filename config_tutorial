@@ -1,0 +1,128 @@
+#本编译工具所在仓库：
+https://github.com/xiaoleGun/KernelSU_Action
+
+#支持内核
+5.4
+4.19
+4.14
+4.9
+
+#首先，Fork和Action之前请登录github账号，否则无法完成以下操作。
+#Fork 本仓库到你的储存库然后按照以下内容编辑 config.env，之后点击Star或Action，在左侧可看见Build Kernel选项，点击选项会看见右边的大对话框的上面会有Run workflows点击它会启动构建。
+
+内核源码仓库名的一般格式为 [android_]kernel_设备厂商_cpu/代号，例如，小米 10S（thyme）的代号为 thyme, CPU 型号为 sm8250，生产厂商为 xiaomi，则搜索格式应为下面几种：
+kernel_xiaomi_thyme
+kernel_xiaomi_sm8250
+android_kernel_xiaomi_thyme
+android_kernel_xiaomi_sm8250
+android_kernel_oneplus_mt6833
+android_kernel_oneplus_sdm845
+参考教程
+https://easternday.top/Topic/Android/Kernel/Compile
+
+#Kernel Source=内核仓库地址，填错会下载不到内核源码，直接失败。
+示例：
+KERNEL_SOURCE=https://github.com/Diva-Room/Miku_kernel_xiaomi_wayne
+KERNEL_SOURCE=https://github.com/LineageOS/android_kernel_oneplus_sdm845
+
+#Kernel Source Branch=内核仓库的分支，填错会下载不到内核源码，直接失败。
+示例：
+KERNEL_SOURCE_BRANCH=TDA
+KERNEL_SOURCE_BRANCH=lineage-20
+KERNEL_SOURCE_BRANCH=oneplus_sm8550_t_13.0_oneplus_11
+KERNEL_SOURCE_BRANCH=oneplus/SDM845_Q_10.0
+
+
+#Kernel Config=你的内核配置文件名，它位于内核源码仓库名/arch/arm64/configs/目录下，里面可能有很多defconfig文件，如果用错了大概率会编译到一半报错。
+示例：
+KERNEL_CONFIG=vendor/wayne_defconfig
+KERNEL_CONFIG=cuttlefish_defconfig
+
+#如果有很多defconfig文件不知道哪个是靠谱的,选最近有修改的那个一般就是了。例如：4 months ago 4个月前修改 
+
+
+Extra cmds
+有的内核需要加入一些其它编译命令，才能正常编译，一般不需要其它的命令，请自行搜索自己内核的资料 请在命令与命令之间用空格隔开
+例如: LLVM=1 LLVM_IAS=1
+一般保持默认就好
+EXTRA_CMDS:LD=ld.lld
+
+
+ARCH=arm64
+选择架构，一般为arm64
+
+
+#Kernel Image Name=内核文件名，用错了会开不了机，建议备份好boot.img文件，然后每一种都试一下。
+
+示例: KERNEL_IMAGE_NAME=Image.gz-dtb
+KERNEL_IMAGE_NAME=Image.gz
+KERNEL_IMAGE_NAME=Image
+
+
+#Clang编译工具链，版本不对可能会有兼容性问题导致编译报错。
+## Custom
+USE_CUSTOM_CLANG=false
+CUSTOM_CLANG_SOURCE=
+CUSTOM_CLANG_BRANCH=
+#上面这些是自己定义编译工具链的选项，不用管。
+
+### if your set USE CUSTOM CLANG to false than DO NOT CHANGE CUSTOM CMDS
+CUSTOM_CMDS:CLANG_TRIPLE=aarch64-linux-gnu-
+一般不用管。
+
+## AOSP
+#Clang Branch=分支名  & Clang version=版本代号
+示例：
+CLANG_BRANCH=android10-release  CLANG_VERSION=r353983c
+
+CLANG_BRANCH=android11-release  CLANG_VERSION=r383902b
+
+CLANG_BRANCH=android12-release  CLANG_VERSION=r416183b
+
+CLANG_BRANCH=android13-release  CLANG_VERSION=r450784d
+#建议先择安卓版本匹配的分支，安卓版本以官方版本为准，例如一加6T的lineage-20是安卓13，但官方版本最高才安卓11。
+#其它分支，请根据自己的需求在 https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86 中寻找。
+
+
+# GCC
+启用 GCC 64 交叉编译
+ENABLE_GCC_ARM64=true
+
+启用 GCC 32 交叉编译
+ENABLE_GCC_ARM32=true
+
+#这里默认就好，不用改。
+
+
+
+# KernelSU flags
+ENABLE_KERNELSU=true    #是否合入ksu，flags/true
+KERNELSU_TAG=main       #ksu分支，例如：KERNELSU_TAG=v0.6.0
+
+
+# Configuration
+DISABLE-LTO=false
+DISABLE_CC_WERROR=false
+ADD_KPROBES_CONFIG=false
+ADD_OVERLAYFS_CONFIG=false
+
+#这些选项作用我也不太明白，全false可能会出现出现假root现象，如果出现假root现象，建议除了第一个全true
+
+
+# Ccache
+ENABLE_CCACHE=true
+
+启用缓存，让第二次编译内核更快，最少可以减少 2/5 的时间
+
+
+# DTBO image
+NEED_DTBO=false
+#一般不用开启，开启后很可能会报错。
+
+
+# Build boot images
+BUILD_BOOT_IMG=true
+SOURCE_BOOT_IMAGE=https://raw.githubusercontent.com/xiaoleGun/KernelSU_action/main/boot/boot.img
+
+#找一个编译好的内核boot.img下载地址，例如lineage-20就有提供boot.img下载地址。
+#故名思义，提供一个源系统可以正常开机的 boot 镜像，需要直链，最好是同一套内核源码以及与你当前系统同一套设备树从 aosp 构建出来的。ramdisk 里面包含分区表以及 init，没有的话构建出来的镜像会无法正常引导。
